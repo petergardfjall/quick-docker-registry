@@ -1,0 +1,26 @@
+#/bin/bash
+
+set -e
+
+if [ "${1}" = "" ]; then
+    echo "error: no docker registry credentials given: '<username>:<password>'"
+    echo "usage: $(basename ${0}) <username>:<password> <registry-host>"
+    exit 1
+fi
+
+if [ "${2}" = "" ]; then
+    echo "error: no docker registry host given"
+    echo "usage: $(basename ${0}) <username>:<password> <registry-host>"
+    exit 1
+fi
+
+
+credentials=${1}
+host=${2}
+
+echo "[show-versions] getting images from ${host} ..."
+images=$(curl --silent --user ${credentials} https://${host}:5000/v2/_catalog | jq '.repositories' | jq --raw-output '.[]')
+
+for image in ${images}; do
+    curl --silent --user ${credentials} https://${host}:5000/v2/${image}/tags/list | jq --sort-keys '. | { name: .name, tags: .tags | sort }'
+done
