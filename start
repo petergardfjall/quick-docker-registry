@@ -1,0 +1,42 @@
+#!/bin/bash
+
+set -e
+
+# Specify HOST_IP in case the local network interface is
+# not reachable to the clients of the registry.
+host_ip=${HOST_IP:-$(hostname -I | cut -d' ' -f 1)}
+
+# Basically, xip.io is a DNS server that resolves a
+# DNS resolution request 'U.V.Y.Z.xip.ip' to 'U.V.Y.Z'.
+# So we use this to give our server a 'public' hostname.
+# See http://xip.io/ for details.
+fqdn=${host_ip}.xip.io
+
+if [ ! -d ./data ]; then
+    echo "[start] creating data directory ..."
+    mkdir ./data
+fi
+
+if [ ! -d ./auth ]; then
+    echo "[start] creating auth directory ..."
+    mkdir ./auth
+    echo "[start] adding user ${USER} ..."
+    docker run --rm --entrypoint htpasswd registry:2 -Bbn ${USER} secret > ./auth/htpasswd
+fi
+
+if [ ! -d ./certs ]; then
+    echo "[start] creating certs directory ..."
+    mkdir ./certs
+fi
+if [ ! -f ./certs/domain.crt ] || [ ! -f ./certs/domain.key ]; then
+    echo "[start] creating self-signed cert for ${fqdn} ..."
+    destdir=./certs
+    subject="/O=DockerRegistry/CN=${fqdn}"
+    openssl genrsa -out ${destdir}/domain.key 2048
+    openssl req -new -x509 -sha256 -key ${destdir}/domain.key \
+	    -out ${destdir}/domain.crt -days 365 -subj "${subject}"
+fi
+
+echo "[start] starting docker registry. for details: docker-compose logs"
+docker-compose up -d
+echo "[start] access docker registry on ${fqdn}"
