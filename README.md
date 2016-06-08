@@ -1,9 +1,9 @@
 ## quick-docker-registry
 `quick-docker-registry` is a simple-to-setup Docker registry intended for 
-development purposes. As such, it is intended to be used as a temporary 
-registry, for example to support a local development environment.
+development purposes. For example, to run on a machine local to your
+development environment.
 
-The following instructions describes how to set it up on your machine.
+The following instructions describes how to set up and use it.
 
 
 ## Start
